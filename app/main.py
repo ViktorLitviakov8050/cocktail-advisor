@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 from typing import Optional
 
-from .services.llm_service import LLMService
+from app.services.llm_service import LLMService
 from .services.cocktail_service import CocktailService
 from .models.schemas import ChatResponse
 
