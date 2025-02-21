@@ -45,19 +45,18 @@ class LLMService:
     async def _generate_response(self, message: str) -> str:
         """Generate response using LLM"""
         try:
+            # Create message list with proper format for ChatOpenAI
             messages = [{"role": "user", "content": message}]
-            response = await self.llm.agenerate(messages=messages)
             
-            # Check if response has the expected structure
-            if (not response or 
-                not hasattr(response, 'generations') or 
-                not response.generations or 
-                not response.generations[0] or 
-                not response.generations[0][0] or 
-                not hasattr(response.generations[0][0], 'text')):
-                raise ValueError("Received invalid response structure from LLM")
+            # Use acall instead of agenerate for ChatOpenAI
+            response = await self.llm.acall(messages)
+            
+            # ChatOpenAI returns a dictionary with 'content' key
+            if not isinstance(response, dict) or 'content' not in response:
+                raise ValueError("Unexpected response format from LLM")
                 
-            return response.generations[0][0].text
+            return response['content']
+            
         except Exception as e:
             # Log the specific error
             print(f"Error generating LLM response: {str(e)}")
