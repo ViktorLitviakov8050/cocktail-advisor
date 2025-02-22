@@ -1,1 +1,13 @@
- 
+version: '3.8'
+
+services:
+  cocktail-advisor:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+    env_file:
+      - .env
+    environment:
+      - ENABLE_FAVORITES=false 

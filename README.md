@@ -84,3 +84,17 @@ Questions for stakeholders:
 - Should we limit the number of favorite ingredients a user can save?
 - Should favorite ingredients influence the ranking of cocktail recommendations?
 - Should we add the ability to group favorite ingredients by category (e.g., spirits, mixers, garnishes)?
+
+## Docker Implementation
+
+Run the application using Docker:
+
+```bash
+# Build and start the container
+docker-compose up --build
+
+# Stop the container
+docker-compose down
+```
+
+Environment variables can be configured in docker-compose.yml or .env file.
