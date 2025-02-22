@@ -11,6 +11,14 @@ A Python-based chat application that uses RAG (Retrieval-Augmented Generation) t
 - RAG system for enhanced responses
 - Optional favorites system for tracking preferred ingredients
 
+## Available Implementations
+
+The project offers different implementations across various branches:
+
+- `main` - Standard version with basic implementation
+- `feature/docker-implementation` - Dockerized version of the application
+- More implementations coming soon...
+
 ## Prerequisites
 
 - Python 3.8+
@@ -25,7 +33,16 @@ git clone https://github.com/ViktorLitviakov8050/cocktail-advisor.git
 cd cocktail-advisor
 ```
 
-2. Set up environment variables in `.env`:
+2. Choose your preferred implementation by checking out the appropriate branch:
+```bash
+# For standard version
+git checkout main
+
+# For Docker implementation
+git checkout feature/docker-implementation
+```
+
+3. Set up environment variables in `.env`:
 ```env
 OPENAI_API_KEY=your_key_here
 ENABLE_FAVORITES=true  # or false to disable favorites
@@ -84,3 +101,17 @@ Questions for stakeholders:
 - Should we limit the number of favorite ingredients a user can save?
 - Should favorite ingredients influence the ranking of cocktail recommendations?
 - Should we add the ability to group favorite ingredients by category (e.g., spirits, mixers, garnishes)?
+
+## Docker Implementation
+
+Run the application using Docker:
+
+```bash
+# Build and start the container
+docker-compose up --build
+
+# Stop the container
+docker-compose down
+```
+
+Environment variables can be configured in docker-compose.yml or .env file.
