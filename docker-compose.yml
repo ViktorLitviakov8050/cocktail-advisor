@@ -4,7 +4,7 @@ services:
   cocktail-advisor:
     build: .
     ports:
-      - "8000:8000"
+      - "8080:8080"
     volumes:
       - ./data:/app/data:rw
     env_file:

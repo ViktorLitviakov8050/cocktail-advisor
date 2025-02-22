@@ -27,34 +27,19 @@ class CocktailService:
     def _initialize_vector_store(self):
         """Initialize the vector store with cocktail data"""
         try:
-            # Check if we have a saved vector store
-            vector_store_path = "data/vector_store"
+            print("Creating vector store...")
+            # Process cocktail data into Documents
+            documents = process_cocktail_data("data/cocktails.csv")
             
-            if os.path.exists(vector_store_path):
-                print("Loading existing vector store...")
-                vector_store = FAISS.load_local(
-                    vector_store_path, 
-                    self.embeddings,
-                    allow_dangerous_deserialization=True
-                )
-            else:
-                print("Creating new vector store...")
-                # Process cocktail data into Documents
-                documents = process_cocktail_data("data/cocktails.csv")
-                
-                # Initialize vector store with the documents
-                vector_store = initialize_vector_store(
-                    documents=documents,
-                    vector_store_class=FAISS,
-                    embedding=self.embeddings
-                )
-                
-                # Save the vector store
-                print("Saving vector store to disk...")
-                vector_store.save_local(vector_store_path)
+            # Initialize vector store with the documents
+            vector_store = initialize_vector_store(
+                documents=documents,
+                vector_store_class=FAISS,
+                embedding=self.embeddings
+            )
             
             return vector_store
-            
+        
         except Exception as e:
             print(f"Error initializing vector store: {str(e)}")
             raise

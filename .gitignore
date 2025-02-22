@@ -27,6 +27,8 @@ ENV/
 
 # Environment Variables
 .env
+.env.local
+node_modules/
 
 # IDE
 .idea/
@@ -37,6 +39,7 @@ ENV/
 # Project specific
 data/vector_store/
 data/favorites.json
+data/vector_store.db
 
 # Logs
 *.log

@@ -1,0 +1,8 @@
+services:
+  - type: web
+    name: cocktail-advisor
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9.18 
