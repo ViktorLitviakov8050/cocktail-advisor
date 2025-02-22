@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cocktail Advisor Chat</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="icon" href="data:,">  <!-- Empty favicon to prevent 404 -->
+</head>
+<body>
+    <div class="chat-container">
+        <div id="chat-messages">
+            <!-- Messages will appear here -->
+        </div>
+        
+        {% if enable_favorites %}
+        <div class="favorites-container">
+            <h3>Favorite Ingredients</h3>
+            <div id="favorites-list"></div>
+            <div class="add-favorite">
+                <input type="text" id="favorite-input" placeholder="Add ingredient...">
+                <button onclick="addFavorite()">Add to Favorites</button>
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="input-container">
+            <form id="chat-form">
+                <input type="text" id="message-input" name="message" placeholder="Ask about cocktails...">
+                <button type="submit" class="send-button">Send</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const chatForm = document.getElementById('chat-form');
+        const messageInput = document.getElementById('message-input');
+        const chatMessages = document.getElementById('chat-messages');
+
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const message = messageInput.value.trim();
+            if (!message) return;
+
+            // Display user message
+            appendMessage('user', message);
+            messageInput.value = '';
+
+            try {
+                // Send message to backend
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `message=${encodeURIComponent(message)}`
+                });
+
+                const data = await response.json();
+                
+                // Display bot response
+                appendMessage('bot', data.message);
+            } catch (error) {
+                console.error('Error:', error);
+                appendMessage('bot', 'Sorry, there was an error processing your message.');
+            }
+        });
+
+        function appendMessage(sender, text) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}-message`;
+            messageDiv.textContent = text;
+            chatMessages.appendChild(messageDiv);
+            
+            // Scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        async function loadFavorites() {
+            try {
+                const response = await fetch('/favorites');
+                const favorites = await response.json();
+                displayFavorites(favorites);
+            } catch (error) {
+                console.error('Error loading favorites:', error);
+            }
+        }
+
+        async function addFavorite() {
+            const input = document.getElementById('favorite-input');
+            const ingredient = input.value.trim();
+            if (!ingredient) return;
+
+            try {
+                const response = await fetch('/favorites/ingredients', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        ingredient: ingredient  // Make sure to wrap in an object
+                    })
+                });
+                
+                if (response.ok) {
+                    input.value = '';
+                    loadFavorites(); // Refresh the favorites list
+                } else {
+                    console.error('Error adding favorite:', await response.text());
+                }
+            } catch (error) {
+                console.error('Error adding favorite:', error);
+            }
+        }
+
+        function displayFavorites(favorites) {
+            const list = document.getElementById('favorites-list');
+            list.innerHTML = favorites.map(ingredient => 
+                `<div class="favorite-item">${ingredient}</div>`
+            ).join('');
+        }
+
+        // Load favorites when page loads
+        loadFavorites();
+    </script>
+</body>
+</html> 
