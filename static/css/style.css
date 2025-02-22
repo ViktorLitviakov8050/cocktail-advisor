@@ -1,0 +1,129 @@
+body {
+    background-color: #000000;
+    color: #ffffff;
+    margin: 0;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+}
+
+.chat-container {
+    background-color: #1a1a1a;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px auto;
+    max-width: 800px;
+    height: 80vh;
+    display: flex;
+    flex-direction: column;
+}
+
+#chat-messages {
+    flex-grow: 1;
+    overflow-y: auto;
+    margin-bottom: 20px;
+    padding: 10px;
+}
+
+.message {
+    padding: 10px 15px;
+    margin: 5px 0;
+    border-radius: 8px;
+    max-width: 80%;
+    word-wrap: break-word;
+}
+
+.user-message {
+    background-color: #0d47a1;
+    margin-left: auto;
+    color: white;
+}
+
+.bot-message {
+    background-color: #1a237e;
+    margin-right: auto;
+    color: white;
+}
+
+.input-container {
+    background-color: #1a1a1a;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+#chat-form {
+    display: flex;
+    gap: 10px;
+}
+
+input[type="text"] {
+    background-color: #2a2a2a;
+    color: #ffffff;
+    border: 1px solid #333333;
+    padding: 12px;
+    border-radius: 4px;
+    flex-grow: 1;
+    font-size: 16px;
+}
+
+.send-button {
+    background-color: #2196f3;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.send-button:hover {
+    background-color: #1976d2;
+}
+
+/* Scrollbar styling */
+#chat-messages::-webkit-scrollbar {
+    width: 8px;
+}
+
+#chat-messages::-webkit-scrollbar-track {
+    background: #1a1a1a;
+}
+
+#chat-messages::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 4px;
+}
+
+#chat-messages::-webkit-scrollbar-thumb:hover {
+    background: #444;
+}
+
+.favorites-container {
+    background-color: #2a2a2a;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+.favorites-container h3 {
+    margin-top: 0;
+    color: #2196f3;
+}
+
+.favorite-item {
+    background-color: #1a237e;
+    padding: 5px 10px;
+    margin: 5px 0;
+    border-radius: 4px;
+    display: inline-block;
+    margin-right: 5px;
+}
+
+.add-favorite {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+#favorite-input {
+    flex-grow: 1;
+} 
