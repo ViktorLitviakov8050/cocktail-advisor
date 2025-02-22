@@ -43,6 +43,41 @@ uvicorn app.main:app --reload
 ENABLE_FAVORITES=false uvicorn app.main:app --reload
 ```
 
+## RAG System Flow
+
+The application uses a Retrieval-Augmented Generation (RAG) system that works as follows:
+
+1. **Initial Setup**:
+   - Cocktail data is processed from CSV into documents
+   - Documents are stored in FAISS vector database
+   - Each document contains cocktail information and metadata
+   - User preferences are stored both in JSON and vector store
+
+2. **Message Processing Flow**:
+   ```mermaid
+   graph TD
+       A[User Message] --> B[LLMService]
+       B --> C{Is Preference?}
+       C -->|Yes| D[Store in Vector DB]
+       C -->|No| E[Search Cocktails]
+       D --> F[Update Favorites]
+       E --> G[Get User Preferences]
+       G --> H[Generate LLM Response]
+       F --> H
+   ```
+
+3. **RAG Components**:
+   - Vector Store: FAISS database storing cocktail data and preferences
+   - Preference Detection: Identifies when users share ingredient preferences
+   - Enhanced Search: Combines user query with stored preferences
+   - Context-Aware Responses: LLM receives both cocktail data and user preferences
+
+4. **Data Flow**:
+   - User preferences are detected from messages
+   - Preferences enhance cocktail search queries
+   - Search results are combined with preference history
+   - LLM generates personalized recommendations
+
 Questions for stakeholders:
 - Should be implemented favorite ingredients section on UI side or no? (probably it's a good option to change time by time your favorite ingredients)
 - Should favorites persist between sessions or reset on each startup?
