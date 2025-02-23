@@ -31,13 +31,14 @@ class CocktailService:
             # Process cocktail data into Documents
             documents = process_cocktail_data("data/cocktails.csv")
             
-            # Initialize vector store with the documents
-            vector_store = initialize_vector_store(
+            # Initialize vector store without metadata_config
+            vector_store = FAISS.from_documents(
                 documents=documents,
-                vector_store_class=FAISS,
                 embedding=self.embeddings
             )
             
+            # Add index optimization
+            vector_store.index.nprobe = 3  # Increase search accuracy
             return vector_store
         
         except Exception as e:
@@ -161,26 +162,37 @@ class CocktailService:
                     
         return non_alcoholic
 
-    def search_with_preferences(self, query: str, k: int = 5):
-        """Search cocktails considering user preferences"""
+    def search_with_preferences(self, query: str, k: int = 5, score_threshold: float = 0.7):
+        """Enhanced search with preference weighting and filtering"""
         try:
-            # Get user's preferences
+            # Get base results
+            results = self.vector_store.similarity_search_with_score(query, k=k*2)
+            
+            # Get user preferences
             preferences = list(self.favorite_ingredients)
             
-            if preferences:
-                # Enhance query with preferences
-                enhanced_query = f"{query} with ingredients like {', '.join(preferences)}"
-            else:
-                enhanced_query = query
+            # Score and filter results
+            scored_results = []
+            for doc, base_score in results:
+                preference_score = self._calculate_preference_score(doc, preferences)
+                final_score = (base_score * 0.7) + (preference_score * 0.3)
+                
+                if final_score >= score_threshold:
+                    scored_results.append((doc, final_score))
             
-            # Search using enhanced query
-            results = self.vector_store.similarity_search(
-                enhanced_query,
-                k=k,
-                filter={"type": "cocktail"}  # Only return cocktail documents
-            )
+            # Sort by final score and return top k
+            scored_results.sort(key=lambda x: x[1], reverse=True)
+            return [doc for doc, _ in scored_results[:k]]
             
-            return results
         except Exception as e:
             print(f"Error in preference-based search: {str(e)}")
-            return [] 
+            return []
+
+    def _calculate_preference_score(self, doc, preferences):
+        """Calculate how well a document matches user preferences"""
+        if not preferences:
+            return 1.0
+        
+        ingredients = doc.metadata.get('ingredients', '').lower()
+        matches = sum(1 for pref in preferences if pref.lower() in ingredients)
+        return matches / len(preferences) 

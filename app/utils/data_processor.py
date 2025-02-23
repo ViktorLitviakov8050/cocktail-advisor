@@ -15,14 +15,14 @@ def process_cocktail_data(csv_path: str) -> List[Document]:
         # Read CSV file
         df = pd.read_csv(csv_path)
         
-        # Map your CSV columns to required fields
-        df['glass_type'] = df['glassType']  # Map glassType to glass_type
+        # Map CSV columns
+        df['glass_type'] = df['glassType']
         df['ingredients'] = df['ingredients'].apply(eval)  # Convert string list to actual list
-        df['ingredientMeasures'] = df['ingredientMeasures'].apply(eval)  # Convert string list to actual list
+        df['ingredientMeasures'] = df['ingredientMeasures'].apply(eval)
         
         documents = []
         
-        # Process each row into a document
+        # Process each cocktail into a Document
         for idx, row in df.iterrows():
             try:
                 # Combine ingredients with their measures
@@ -35,7 +35,7 @@ def process_cocktail_data(csv_path: str) -> List[Document]:
                 
                 ingredients_text = ", ".join(ingredients_with_measures)
                 
-                # Clean and format the data
+                # Create formatted content
                 content = f"""
                 Cocktail Name: {str(row['name']).strip()}
                 Ingredients: {ingredients_text}
@@ -45,7 +45,7 @@ def process_cocktail_data(csv_path: str) -> List[Document]:
                 Alcoholic: {str(row['alcoholic']).strip()}
                 """
                 
-                # Create metadata dictionary
+                # Create metadata for searching
                 metadata = {
                     'name': str(row['name']).strip(),
                     'category': str(row['category']).strip(),
@@ -53,10 +53,10 @@ def process_cocktail_data(csv_path: str) -> List[Document]:
                     'alcoholic': str(row['alcoholic']).strip(),
                     'ingredients': ingredients_text,
                     'source': 'cocktails_database',
-                    'type': 'cocktail'  # Add document type
+                    'type': 'cocktail'
                 }
                 
-                # Create Document object
+                # Create Document object for vector store
                 doc = Document(
                     page_content=content.strip(),
                     metadata=metadata
@@ -72,16 +72,6 @@ def process_cocktail_data(csv_path: str) -> List[Document]:
             raise ValueError("No documents were successfully processed")
             
         print(f"Successfully processed {len(documents)} cocktail recipes")
-        
-        # Add debug print for the first few documents
-        if documents:
-            print("\nSample of processed documents:")
-            for doc in documents[:2]:  # Show first 2 documents
-                print("\nDocument content:")
-                print(doc.page_content)
-                print("\nDocument metadata:")
-                print(doc.metadata)
-                
         return documents
         
     except Exception as e:

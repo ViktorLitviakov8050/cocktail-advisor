@@ -17,7 +17,7 @@ The application can be run in three different ways, each on its own branch:
    - Best for deployment and data persistence
 
 3. **Favorites-Optional Version** (`feature/disable-favorites` branch)
-   - Configurable favorites system
+   - Configurable favorites system 
    - Run with: `ENABLE_FAVORITES=false uvicorn app.main:app --reload`
    - Best for testing different UI configurations
 
