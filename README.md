@@ -17,7 +17,9 @@ The application can be run in three different ways, each on its own branch:
    - Best for deployment and data persistence
 
 3. **Favorites-Optional Version** (`feature/disable-favorites` branch)
-   - Configurable favorites system 
+
+   - Configurable favorites system
+
    - Run with: `ENABLE_FAVORITES=false uvicorn app.main:app --reload`
    - Best for testing different UI configurations
 
@@ -38,6 +40,14 @@ git checkout feature/disable-favorites     # Favorites-optional version
 - RAG system for enhanced responses
 - Optional favorites system for tracking preferred ingredients
 
+## Available Implementations
+
+The project offers different implementations across various branches:
+
+- `main` - Standard version with basic implementation
+- `feature/docker-implementation` - Dockerized version of the application
+- More implementations coming soon...
+
 ## Prerequisites
 
 - Python 3.8+
@@ -52,7 +62,16 @@ git clone https://github.com/ViktorLitviakov8050/cocktail-advisor.git
 cd cocktail-advisor
 ```
 
-2. Set up environment variables in `.env`:
+2. Choose your preferred implementation by checking out the appropriate branch:
+```bash
+# For standard version
+git checkout main
+
+# For Docker implementation
+git checkout feature/docker-implementation
+```
+
+3. Set up environment variables in `.env`:
 ```env
 OPENAI_API_KEY=your_key_here
 ENABLE_FAVORITES=true  # or false to disable favorites
@@ -125,3 +144,4 @@ docker-compose down
 ```
 
 Environment variables can be configured in docker-compose.yml or .env file.
+
