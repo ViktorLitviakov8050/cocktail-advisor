@@ -1,4 +1,5 @@
-# Python
+def create_gitignore():
+    content = """# Python
 __pycache__/
 *.py[cod]
 *$py.class
@@ -40,7 +41,14 @@ data/favorites.json
 
 # Logs
 *.log
+
+# Docker
+.docker/
+docker-compose.override.yml
 """
 
-with open('.gitignore', 'w') as f:
-    f.write(content) 
+    with open('.gitignore', 'w') as f:
+        f.write(content)
+
+if __name__ == "__main__":
+    create_gitignore() 

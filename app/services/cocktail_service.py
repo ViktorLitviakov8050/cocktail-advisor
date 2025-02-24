@@ -9,13 +9,18 @@ from langchain.schema import Document
 from datetime import datetime
 
 class CocktailService:
+    _vector_store = None  # Class-level singleton
+
     def __init__(self):
         try:
             # Initialize OpenAI embeddings
             self.embeddings = OpenAIEmbeddings(openai_api_key=os.getenv("OPENAI_API_KEY"))
             
-            # Initialize/load vector store
-            self.vector_store = self._initialize_vector_store()
+            # Initialize/load vector store only if not already created
+            if CocktailService._vector_store is None:
+                print("Creating vector store...")
+                CocktailService._vector_store = self._initialize_vector_store()
+            self.vector_store = CocktailService._vector_store
             
             # Load saved favorites
             self.favorites_file = "data/favorites.json"
@@ -27,34 +32,20 @@ class CocktailService:
     def _initialize_vector_store(self):
         """Initialize the vector store with cocktail data"""
         try:
-            # Check if we have a saved vector store
-            vector_store_path = "data/vector_store"
+            print("Creating vector store...")
+            # Process cocktail data into Documents
+            documents = process_cocktail_data("data/cocktails.csv")
             
-            if os.path.exists(vector_store_path):
-                print("Loading existing vector store...")
-                vector_store = FAISS.load_local(
-                    vector_store_path, 
-                    self.embeddings,
-                    allow_dangerous_deserialization=True
-                )
-            else:
-                print("Creating new vector store...")
-                # Process cocktail data into Documents
-                documents = process_cocktail_data("data/cocktails.csv")
-                
-                # Initialize vector store with the documents
-                vector_store = initialize_vector_store(
-                    documents=documents,
-                    vector_store_class=FAISS,
-                    embedding=self.embeddings
-                )
-                
-                # Save the vector store
-                print("Saving vector store to disk...")
-                vector_store.save_local(vector_store_path)
+            # Initialize vector store without metadata_config
+            vector_store = FAISS.from_documents(
+                documents=documents,
+                embedding=self.embeddings
+            )
             
+            # Add index optimization
+            vector_store.index.nprobe = 3  # Increase search accuracy
             return vector_store
-            
+        
         except Exception as e:
             print(f"Error initializing vector store: {str(e)}")
             raise
@@ -166,15 +157,32 @@ class CocktailService:
         
     def get_non_alcoholic_cocktails(self, limit: int = 5) -> List[Dict]:
         """Get non-alcoholic cocktails"""
-        non_alcoholic = []
-        
-        for cocktail in self.vector_store.cocktail_data.values():
-            if not cocktail['alcoholic']:
-                non_alcoholic.append(cocktail)
-                if len(non_alcoholic) >= limit:
-                    break
+        try:
+            # Search using explicit query for non-alcoholic drinks
+            results = self.vector_store.similarity_search(
+                "non-alcoholic cocktails",
+                k=limit * 2,  # Get more results to filter
+                filter={"type": "cocktail"}
+            )
+            
+            # Filter results to ensure they're non-alcoholic
+            non_alcoholic = []
+            for result in results:
+                if result.metadata['alcoholic'].lower() == 'non alcoholic':
+                    non_alcoholic.append({
+                        'name': result.metadata['name'],
+                        'ingredients': result.metadata['ingredients'],
+                        'category': result.metadata['category'],
+                        'glass_type': result.metadata['glass_type'],
+                        'alcoholic': result.metadata['alcoholic']
+                    })
+                    if len(non_alcoholic) >= limit:
+                        break
                     
-        return non_alcoholic
+            return non_alcoholic
+        except Exception as e:
+            print(f"Error getting non-alcoholic cocktails: {str(e)}")
+            return []
 
     def search_with_preferences(self, query: str, k: int = 5):
         """Search cocktails considering user preferences"""
@@ -198,4 +206,17 @@ class CocktailService:
             return results
         except Exception as e:
             print(f"Error in preference-based search: {str(e)}")
-            return [] 
+            return []
+
+    def remove_favorite_ingredient(self, ingredient: str):
+        """Remove an ingredient from favorites"""
+        try:
+            ingredient = ingredient.lower()
+            if ingredient in self.favorite_ingredients:
+                self.favorite_ingredients.remove(ingredient)
+                self._save_favorites()
+                return {"message": f"Removed {ingredient} from favorites"}
+            return {"message": f"{ingredient} was not in your favorites"}
+        except Exception as e:
+            print(f"Error removing favorite: {str(e)}")
+            raise 
