@@ -8,6 +8,4 @@ services:
     volumes:
       - ./data:/app/data:rw
     env_file:
-      - .env
-    environment:
-      - ENABLE_FAVORITES=false 
+      - .env 

@@ -9,13 +9,18 @@ from langchain.schema import Document
 from datetime import datetime
 
 class CocktailService:
+    _vector_store = None  # Class-level singleton
+
     def __init__(self):
         try:
             # Initialize OpenAI embeddings
             self.embeddings = OpenAIEmbeddings(openai_api_key=os.getenv("OPENAI_API_KEY"))
             
-            # Initialize/load vector store
-            self.vector_store = self._initialize_vector_store()
+            # Initialize/load vector store only if not already created
+            if CocktailService._vector_store is None:
+                print("Creating vector store...")
+                CocktailService._vector_store = self._initialize_vector_store()
+            self.vector_store = CocktailService._vector_store
             
             # Load saved favorites
             self.favorites_file = "data/favorites.json"
@@ -152,47 +157,66 @@ class CocktailService:
         
     def get_non_alcoholic_cocktails(self, limit: int = 5) -> List[Dict]:
         """Get non-alcoholic cocktails"""
-        non_alcoholic = []
-        
-        for cocktail in self.vector_store.cocktail_data.values():
-            if not cocktail['alcoholic']:
-                non_alcoholic.append(cocktail)
-                if len(non_alcoholic) >= limit:
-                    break
-                    
-        return non_alcoholic
-
-    def search_with_preferences(self, query: str, k: int = 5, score_threshold: float = 0.7):
-        """Enhanced search with preference weighting and filtering"""
         try:
-            # Get base results
-            results = self.vector_store.similarity_search_with_score(query, k=k*2)
+            # Search using explicit query for non-alcoholic drinks
+            results = self.vector_store.similarity_search(
+                "non-alcoholic cocktails",
+                k=limit * 2,  # Get more results to filter
+                filter={"type": "cocktail"}
+            )
             
-            # Get user preferences
+            # Filter results to ensure they're non-alcoholic
+            non_alcoholic = []
+            for result in results:
+                if result.metadata['alcoholic'].lower() == 'non alcoholic':
+                    non_alcoholic.append({
+                        'name': result.metadata['name'],
+                        'ingredients': result.metadata['ingredients'],
+                        'category': result.metadata['category'],
+                        'glass_type': result.metadata['glass_type'],
+                        'alcoholic': result.metadata['alcoholic']
+                    })
+                    if len(non_alcoholic) >= limit:
+                        break
+                    
+            return non_alcoholic
+        except Exception as e:
+            print(f"Error getting non-alcoholic cocktails: {str(e)}")
+            return []
+
+    def search_with_preferences(self, query: str, k: int = 5):
+        """Search cocktails considering user preferences"""
+        try:
+            # Get user's preferences
             preferences = list(self.favorite_ingredients)
             
-            # Score and filter results
-            scored_results = []
-            for doc, base_score in results:
-                preference_score = self._calculate_preference_score(doc, preferences)
-                final_score = (base_score * 0.7) + (preference_score * 0.3)
-                
-                if final_score >= score_threshold:
-                    scored_results.append((doc, final_score))
+            if preferences:
+                # Enhance query with preferences
+                enhanced_query = f"{query} with ingredients like {', '.join(preferences)}"
+            else:
+                enhanced_query = query
             
-            # Sort by final score and return top k
-            scored_results.sort(key=lambda x: x[1], reverse=True)
-            return [doc for doc, _ in scored_results[:k]]
+            # Search using enhanced query
+            results = self.vector_store.similarity_search(
+                enhanced_query,
+                k=k,
+                filter={"type": "cocktail"}  # Only return cocktail documents
+            )
             
+            return results
         except Exception as e:
             print(f"Error in preference-based search: {str(e)}")
             return []
 
-    def _calculate_preference_score(self, doc, preferences):
-        """Calculate how well a document matches user preferences"""
-        if not preferences:
-            return 1.0
-        
-        ingredients = doc.metadata.get('ingredients', '').lower()
-        matches = sum(1 for pref in preferences if pref.lower() in ingredients)
-        return matches / len(preferences) 
+    def remove_favorite_ingredient(self, ingredient: str):
+        """Remove an ingredient from favorites"""
+        try:
+            ingredient = ingredient.lower()
+            if ingredient in self.favorite_ingredients:
+                self.favorite_ingredients.remove(ingredient)
+                self._save_favorites()
+                return {"message": f"Removed {ingredient} from favorites"}
+            return {"message": f"{ingredient} was not in your favorites"}
+        except Exception as e:
+            print(f"Error removing favorite: {str(e)}")
+            raise 

@@ -1,10 +1,11 @@
-from fastapi import FastAPI, Request, Form, Body
+from fastapi import FastAPI, Request, Body, HTTPException
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 import os
 from typing import Optional
 from dotenv import load_dotenv
+from pydantic import BaseModel
 
 from app.services.llm_service import LLMService
 from .services.cocktail_service import CocktailService
@@ -15,7 +16,7 @@ load_dotenv()
 
 app = FastAPI(title="Cocktail Advisor Chat")
 
-# Mount static files - make sure this comes BEFORE templates initialization
+# Mount static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="app/templates")
 
@@ -23,36 +24,41 @@ templates = Jinja2Templates(directory="app/templates")
 llm_service = LLMService()
 cocktail_service = CocktailService()
 
+class Message(BaseModel):
+    text: str
+
 @app.get("/", response_class=HTMLResponse)
 async def chat_page(request: Request):
-    # Force reload environment variables
-    load_dotenv(override=True)  # Add override=True
-    
-    # Get the flag from environment variable, default to false if not set
-    enable_favorites = os.getenv("ENABLE_FAVORITES", "false").lower() == "true"
-    print(f"ENABLE_FAVORITES is set to: {enable_favorites}")  # Add debug print
-    
     return templates.TemplateResponse("index.html", {
-        "request": request,
-        "enable_favorites": enable_favorites
+        "request": request
     })
 
 @app.post("/chat")
-async def chat(message: str = Form(...)) -> ChatResponse:
-    # Send message to LLM service
-    response = await llm_service.process_message(message)
-    return ChatResponse(message=response)
+async def chat(request: Request):
+    try:
+        body = await request.json()
+        message_text = body.get("text", "")
+            
+        if not message_text or not message_text.strip():
+            raise HTTPException(status_code=400, detail="Message text cannot be empty")
+            
+        response = await llm_service.process_message(message_text)
+        if not response:
+            return {"response": "I apologize, but I couldn't generate a proper response. Could you try rephrasing your question?"}
+        return {"response": response}
+    except ValueError as ve:
+        print(f"Validation error: {str(ve)}")
+        raise HTTPException(status_code=422, detail=str(ve))
+    except Exception as e:
+        print(f"Error in chat endpoint: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"An error occurred while processing your message: {str(e)}"
+        )
 
-@app.get("/favorites")
-async def get_favorites():
-    return cocktail_service.get_favorite_ingredients()
-
-@app.post("/favorites/ingredients")
-async def add_favorite_ingredient(ingredient: str = Body(..., embed=True)):
-    """
-    Expects JSON body: {"ingredient": "vodka"}
-    """
-    return cocktail_service.add_favorite_ingredient(ingredient)
+@app.get("/")
+async def root():
+    return {"message": "Welcome to the Cocktail Recommendation System"}
 
 if __name__ == "__main__":
     import uvicorn
