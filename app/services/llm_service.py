@@ -12,7 +12,7 @@ class LLMService:
         # - "gpt-4-turbo-preview" (latest GPT-4 Turbo)
         self.llm = ChatOpenAI(
             temperature=0.7,
-            model_name="gpt-4-turbo-preview",  # Updated to latest GPT-3.5
+            model_name="gpt-3.5-turbo-0125", 
             api_key=os.getenv("OPENAI_API_KEY")
         )
         self.memory = ConversationBufferMemory(
